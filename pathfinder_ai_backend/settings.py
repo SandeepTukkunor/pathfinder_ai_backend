@@ -40,7 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework', # Add this line
-    'user',
+    'pathfinder_apps.user',
     "rest_framework_simplejwt"
 
 ]

@@ -8,7 +8,7 @@ from django.contrib.auth import authenticate
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
-from user.models import CustomUser
+from .models import CustomUser
 
 
 from .serializers import UserSerializer
