@@ -14,6 +14,7 @@ import datetime
 from pathlib import Path
 import secrets
 
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -41,6 +42,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework', # Add this line
     'pathfinder_apps.user',
+    "pathfinder_apps.news_app",
     "rest_framework_simplejwt"
 
 ]
