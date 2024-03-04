@@ -1,1 +1,1 @@
-This repo contains simple implementation of JWT tokenization in Python Django
+This repo contains the Code for path_finder app backend 
