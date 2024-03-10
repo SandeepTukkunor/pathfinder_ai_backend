@@ -1,6 +1,7 @@
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.db import models
 from django.conf import settings
+import uuid
 
 
 class CustomUserManager(BaseUserManager):
@@ -22,6 +23,7 @@ class CustomUserManager(BaseUserManager):
         return self.create_user(email, username, password, **extra_fields)
 
 class CustomUser(AbstractBaseUser, PermissionsMixin):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     email = models.EmailField(unique=True)
     username = models.CharField(max_length=150, unique=True)
     first_name = models.CharField(max_length=30, blank=True)
@@ -46,4 +48,13 @@ class RefreshToken(models.Model):
     blacklisted = models.BooleanField(default=False)
 
 
-
+class UserInfo(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    info_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    date_of_birth = models.DateField(null=True, blank=True)
+    exam_type = models.CharField(max_length=100, null=True, blank=True)
+    education_level = models.CharField(max_length=100, null=True, blank=True)
+    profession = models.CharField(max_length=100, null=True, blank=True)
+    location = models.CharField(max_length=100, null=True, blank=True)

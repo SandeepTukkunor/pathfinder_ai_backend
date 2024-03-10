@@ -2,16 +2,18 @@ from datetime import datetime
 from tokenize import TokenError
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import status, generics
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from django.shortcuts import get_object_or_404
+from django.forms.models import model_to_dict
 
-from .models import CustomUser
+from .models import CustomUser, UserInfo
 
 
-from .serializers import UserSerializer
+from .serializers import UserSerializer, UserInfoSerializer
 from datetime import date
 
 class SignUpView(APIView):
@@ -64,13 +66,41 @@ class RefreshTokenView(APIView):
 
 
 
-class GetAllUsers(APIView):
+class UserInfoApiView(generics.GenericAPIView):
     # authentication_classes = [JWTAuthentication]
 
     permission_classes = [IsAuthenticated]
+
+    def get_user_info(self, instance):
+        user_info_dict = model_to_dict(instance)
+        return user_info_dict
     
 
     def get(self, request):
-        CustemUser = CustomUser.objects.all()
+        
+        user_info = UserInfo.objects.get(user=request.user.id)
+        return_data = self.get_user_info(user_info)
+        return Response({"Status": "Success", "Data":return_data}, status=status.HTTP_200_OK)    
 
-        return Response({"Status": "Success", "Data": "Users Fetched Succefully"})
+    def post(self, request):
+        serializer = UserInfoSerializer(data=request.data, partial=True, context={'user': request.user})
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"Status": "Success", "Data": "User Info Saved Successfully"}, status=status.HTTP_201_CREATED)
+        
+        return Response({"error":serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
+    def patch(self, request):
+        user_info = get_object_or_404(UserInfo, user=request.user.id)
+        serializer = UserInfoSerializer(user_info, data=request.data, partial=True, context={'user': request.user})
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"Status": "Success", "Data": "User Info Updated Successfully"}, status=status.HTTP_200_OK)
+        else:
+            return Response({"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request):
+        pass
