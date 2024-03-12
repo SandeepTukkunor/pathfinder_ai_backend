@@ -18,6 +18,8 @@ from ..utils.email_utils import EmailUtils
 from .serializers import UserSerializer, UserInfoSerializer
 from datetime import timedelta
 import pytz
+from jwt.exceptions import ExpiredSignatureError, DecodeError
+
 
 
 class SignUpView(APIView):
@@ -29,7 +31,7 @@ class SignUpView(APIView):
             now_ist = datetime.now(pytz.timezone('Asia/Kolkata'))
 
 # Generate a JWT token that expires in 15 minutes
-            token = jwt.encode({'user_id': str(user.id), 'exp': now_ist + timedelta(minutes=15)}, settings.SECRET_KEY, algorithm='HS256')
+            token = jwt.encode({'user_id': str(user.id), 'exp': now_ist + timedelta(minutes=1)}, settings.SECRET_KEY, algorithm='HS256')
             verification_link = f"http://localhost:8000/user/verify/{token}"    
             email_utils = EmailUtils()
             email_utils.send_verification_email( user.email, verification_link)
@@ -44,7 +46,7 @@ class SignInView(APIView):
         email = request.data.get('email')
         password = request.data.get('password')
 
-        user = authenticate(username=email, password=password)
+        user = authenticate(email=email, password=password)
         if user is not None:
             if not user.is_email_verified:
                 return Response({'error': 'Email not verified'}, status=status.HTTP_403_FORBIDDEN)
@@ -92,7 +94,57 @@ class VerifyEmailView(APIView):
         except jwt.exceptions.DecodeError as identifier:
             return Response({'error': 'token not valid'}, status=status.HTTP_400_BAD_REQUEST)
         
+        except ExpiredSignatureError:
+            return Response({"error": "Signature has expired"}, status=status.HTTP_401_UNAUTHORIZED)
+        
 
+class ResendEmailView(APIView):
+    def post(self, request):
+        email = request.data.get("email")
+        user = CustomUser.objects.filter(email=email).first()
+        if user:
+            #sending email 
+            now_ist = datetime.now(pytz.timezone('Asia/Kolkata'))
+            # Generate a JWT token that expires in 15 minutes
+            token = jwt.encode({'user_id': str(user.id), 'exp': now_ist + timedelta(minutes=1)}, settings.SECRET_KEY, algorithm='HS256')
+            verification_link = f"http://localhost:8000/user/verify/{token}"    
+            email_utils = EmailUtils()
+            email_utils.send_verification_email(user.email, verification_link)
+            return Response({"message": "Verification email has been sent."})
+        return Response({"error": "User not found"}, status=status.HTTP_400_BAD_REQUEST)
+    
+
+class ForgotPasswordView(APIView):
+    def post(self, request):
+        email = request.data.get('email')
+        user = CustomUser.objects.filter(email=email).first()
+        if user:
+            now_ist = datetime.now(pytz.timezone('Asia/Kolkata'))
+
+            # Generate a JWT token that expires in 15 minutes
+            token = jwt.encode({'user_id': str(user.id), 'exp': now_ist + timedelta(minutes=15)}, settings.SECRET_KEY, algorithm='HS256')
+            reset_link = f"http://localhost:8000/user/reset_password/{token}"    
+            email_utils = EmailUtils()
+            email_utils.send_reset_password_email(user.email, reset_link)
+            return Response({"message": "Reset password email has been sent."})
+        return Response({"error": "User not found"}, status=status.HTTP_400_BAD_REQUEST)
+    
+
+
+
+class ResetPasswordView(APIView):
+    def post(self, request, token):
+        password = request.data.get('password')
+        try:
+            # Decode the token
+            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
+            user_id = payload['user_id']
+            user = CustomUser.objects.get(id=user_id)
+            user.set_password(password)
+            user.save()
+            return Response({"message": "Password has been reset."})
+        except (jwt.DecodeError, jwt.ExpiredSignatureError):
+            return Response({"error": "Invalid or expired token"}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class UserInfoApiView(generics.GenericAPIView):

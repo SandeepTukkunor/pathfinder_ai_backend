@@ -14,15 +14,10 @@ class EmailUtils:
         self.sender_password = settings.EMAIL_HOST_PASSWORD
 
     def send_verification_email(self, to_email, verification_code):
-        # Create a multipart message
-        # message = MIMEMultipart()
-        # message['From'] = self.sender_email
-        # message['To'] = to_email 
-        # message['Subject'] = 'Verification Email'
+ 
 
         # Add the verification code to the email body
         body = f'Your verification code is: {verification_code}'
-        # message.attach(MIMEText(body, 'plain'))
 
         # Send the email using Django's send_mail function
         send_mail(
@@ -52,4 +47,14 @@ class EmailUtils:
             fail_silently=False,
         )
 
+    def send_reset_password_email(self, to_email, reset_link):
+        #
+        body = f'Click the link below to reset your password:\n{reset_link}'
 
+        send_mail(
+            'Reset Password',
+            body,
+            self.sender_email,
+            [to_email],
+            fail_silently=False,
+        )
