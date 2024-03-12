@@ -58,6 +58,13 @@ class SignInView(APIView):
             }, status=status.HTTP_200_OK)
         else:
             return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+        
+class LogoutView(APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        return Response({"message": "Logout successful"}, status=status.HTTP_200_OK)
 
 
 
@@ -106,7 +113,7 @@ class ResendEmailView(APIView):
             #sending email 
             now_ist = datetime.now(pytz.timezone('Asia/Kolkata'))
             # Generate a JWT token that expires in 15 minutes
-            token = jwt.encode({'user_id': str(user.id), 'exp': now_ist + timedelta(minutes=1)}, settings.SECRET_KEY, algorithm='HS256')
+            token = jwt.encode({'user_id': str(user.id), 'exp': now_ist + timedelta(minutes=15)}, settings.SECRET_KEY, algorithm='HS256')
             verification_link = f"http://localhost:8000/user/verify/{token}"    
             email_utils = EmailUtils()
             email_utils.send_verification_email(user.email, verification_link)
