@@ -7,7 +7,7 @@ urlpatterns = [
     path('signin/', SignInView.as_view(), name='signin'),
     path('refresh-token/', RefreshTokenView.as_view(), name='refresh_token'),
     path("user_info/", UserInfoApiView.as_view(), name="user_info"),
-    path('verify/<str:uid>/<str:token>/', VerifyEmailView.as_view(), name='verify-email'),
+    path('verify/<str:token>/', VerifyEmailView.as_view(), name='verify-email'),
      
 ]
 
